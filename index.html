@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Putting models to work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1433; --bg2: #161c44; --ink: #f4f1ea; --soft: #b9bdd6; --dim: #7c82a8;
+    --accent: #ff8a5b; --teal: #5fd3c0; --gold: #f2c14e; --violet: #a99bff; --line: #2a3163;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); overflow: hidden;
+               font: 400 clamp(16px, 2.1vw, 26px)/1.45 Inter, system-ui, sans-serif; }
+  .deck { height: 100%; position: relative; }
+  section { position: absolute; inset: 0; padding: 7vh 8vw; display: flex; flex-direction: column; justify-content: center;
+            opacity: 0; transform: translateY(18px); transition: opacity .45s ease, transform .45s ease; pointer-events: none;
+            background: radial-gradient(1200px 700px at 85% 10%, #232b66 0%, transparent 60%), var(--bg); }
+  section.on { opacity: 1; transform: none; pointer-events: auto; }
+  h1, h2 { font-family: Fraunces, Georgia, serif; font-weight: 700; letter-spacing: -.01em; line-height: 1.08; }
+  h1 { font-size: clamp(40px, 6.6vw, 96px); }
+  h2 { font-size: clamp(30px, 4.2vw, 60px); margin-bottom: .6em; }
+  .kicker { font: 600 .7em Inter; text-transform: uppercase; letter-spacing: .18em; color: var(--accent); margin-bottom: 1em; }
+  .lead { color: var(--soft); font-size: 1.15em; max-width: 34em; margin-top: .8em; }
+  em { font-style: normal; color: var(--accent); }
+  .t { color: var(--teal); } .g { color: var(--gold); } .v { color: var(--violet); }
+  code, .mono { font-family: "JetBrains Mono", monospace; font-size: .85em; }
+  code { background: #232a5c; padding: .1em .35em; border-radius: 6px; }
+  ul.clean { list-style: none; padding: 0; }
+  ul.clean li { padding: .35em 0 .35em 1.4em; position: relative; }
+  ul.clean li::before { content: ""; position: absolute; left: 0; top: .95em; width: .55em; height: .55em; border-radius: 50%; background: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: center; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2vw; margin-top: .4em; }
+  .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 1.1em 1em; }
+  .card b { display: block; font-family: Fraunces, serif; font-size: 1.25em; margin: .25em 0 .3em; }
+  .card small { color: var(--soft); font-size: .78em; line-height: 1.4; display: block; }
+  .big { font-size: 2.1em; }
+  .timeline { display: grid; grid-template-columns: 7.5em 1fr; row-gap: .55em; column-gap: 1.2em; margin-top: .3em; }
+  .timeline .time { font-family: "JetBrains Mono", monospace; color: var(--dim); font-size: .85em; padding-top: .15em; }
+  .timeline .what b { color: var(--ink); } .timeline .what span { color: var(--soft); }
+  .pill { display: inline-block; padding: .2em .7em; border-radius: 99px; border: 1px solid var(--line); background: var(--bg2); margin: .2em .25em .2em 0; font-size: .85em; }
+  .note { color: var(--dim); font-size: .75em; margin-top: 1.4em; }
+  svg text { font-family: Inter, sans-serif; }
+  .bar { position: fixed; left: 0; bottom: 0; height: 4px; background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width .4s ease; z-index: 5; }
+  .count { position: fixed; right: 2.2vw; bottom: 1.6vh; color: var(--dim); font: 500 13px "JetBrains Mono", monospace; z-index: 5; }
+  .hint { position: fixed; left: 2.2vw; bottom: 1.6vh; color: var(--dim); font: 500 13px Inter; z-index: 5; }
+  .nav { position: fixed; top: 0; bottom: 0; width: 18vw; z-index: 4; cursor: pointer; }
+  .nav.prev { left: 0; } .nav.next { right: 0; }
+  a { color: var(--teal); text-decoration: none; border-bottom: 1px solid #5fd3c055; }
+  @media (max-width: 760px) {
+    section { padding: 6vh 6vw; justify-content: flex-start; padding-top: 10vh; overflow-y: auto; }
+    .grid2 { grid-template-columns: 1fr; } .cards { grid-template-columns: 1fr 1fr; }
+    .timeline { grid-template-columns: 5.5em 1fr; }
+  }
+  @media print {
+    html, body { overflow: visible; height: auto; }
+    section { position: relative; opacity: 1; transform: none; page-break-after: always; height: 100vh; }
+    .bar, .count, .hint, .nav { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- 1 -->
+<section>
+  <div class="kicker">Business Data Science · Session 11</div>
+  <h1>Putting models<br>to <em>work</em></h1>
+  <p class="lead">From a model in a notebook to workflows that run by themselves, with n8n, a model shelf and an AI assistant that builds with us.</p>
+</section>
+
+<!-- 2 -->
+<section>
+  <div class="kicker">Where we are</div>
+  <h2>A model nobody uses<br>helps nobody</h2>
+  <svg viewBox="0 0 1000 230" width="100%" style="max-height:34vh" role="img" aria-label="Session 09 notebook, session 10 app, session 11 workflow">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7c82a8"/></marker></defs>
+    <g font-size="22">
+      <rect x="10" y="40" width="270" height="150" rx="22" fill="#161c44" stroke="#2a3163"/>
+      <text x="40" y="90" fill="#7c82a8" font-size="16" letter-spacing="3">SESSION 09</text>
+      <text x="40" y="130" fill="#f4f1ea" font-size="30" font-family="Fraunces, serif" font-weight="700">📓 Notebook</text>
+      <text x="40" y="165" fill="#b9bdd6" font-size="18">a model, and its mistakes</text>
+      <line x1="290" y1="115" x2="355" y2="115" stroke="#7c82a8" stroke-width="3" marker-end="url(#ar)"/>
+      <rect x="365" y="40" width="270" height="150" rx="22" fill="#161c44" stroke="#2a3163"/>
+      <text x="395" y="90" fill="#7c82a8" font-size="16" letter-spacing="3">SESSION 10</text>
+      <text x="395" y="130" fill="#f4f1ea" font-size="30" font-family="Fraunces, serif" font-weight="700">🛎️ App</text>
+      <text x="395" y="165" fill="#b9bdd6" font-size="18">a person uses the model</text>
+      <line x1="645" y1="115" x2="710" y2="115" stroke="#7c82a8" stroke-width="3" marker-end="url(#ar)"/>
+      <rect x="720" y="40" width="270" height="150" rx="22" fill="#2a1f3d" stroke="#ff8a5b" stroke-width="2"/>
+      <text x="750" y="90" fill="#ff8a5b" font-size="16" letter-spacing="3">TODAY</text>
+      <text x="750" y="130" fill="#f4f1ea" font-size="30" font-family="Fraunces, serif" font-weight="700">⚙️ Workflow</text>
+      <text x="750" y="165" fill="#b9bdd6" font-size="18">the model works on its own</text>
+    </g>
+  </svg>
+</section>
+
+<!-- 3 -->
+<section>
+  <div class="kicker">What a workflow is</div>
+  <h2>Something happens.<br>Steps follow. Someone <em>acts</em>.</h2>
+  <div class="cards">
+    <div class="card"><span class="big">⏰</span><b class="g">Trigger</b><small>a form, 7 am every day, a chat message, a new row, an email</small></div>
+    <div class="card"><span class="big">📥</span><b class="t">Data</b><small>fetch the bookings, the sheet, the inbox, an API</small></div>
+    <div class="card"><span class="big">🧠</span><b class="v">Model / LLM</b><small>predict a risk, classify, summarise, write</small></div>
+    <div class="card"><span class="big">📣</span><b style="color:var(--accent)">Action</b><small>a message, a row, an email draft, a ticket</small></div>
+  </div>
+  <p class="lead" style="margin-top:1.2em"><b>n8n</b> draws this as boxes and arrows. Each box does one thing, and the data flows through as small JSON records.</p>
+</section>
+
+<!-- 4 -->
+<section>
+  <div class="kicker">Demo · the hotel front desk, automated</div>
+  <h2>Every morning at 7</h2>
+  <svg viewBox="0 0 1200 300" width="100%" style="max-height:42vh" role="img" aria-label="Schedule, score bookings, overbooking maths, LLM briefing, Telegram">
+    <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7c82a8"/></marker></defs>
+    <g font-size="19" fill="#f4f1ea">
+      <g><rect x="0" y="80" width="200" height="120" rx="20" fill="#161c44" stroke="#f2c14e"/><text x="100" y="135" text-anchor="middle" font-size="34">⏰</text><text x="100" y="178" text-anchor="middle">7:00 or a form</text></g>
+      <line x1="205" y1="140" x2="245" y2="140" stroke="#7c82a8" stroke-width="3" marker-end="url(#ar2)"/>
+      <g><rect x="250" y="80" width="210" height="120" rx="20" fill="#161c44" stroke="#5fd3c0"/><text x="355" y="135" text-anchor="middle" font-size="34">🎯</text><text x="355" y="178" text-anchor="middle">score tonight's</text><text x="355" y="224" text-anchor="middle" fill="#7c82a8" font-size="16">our model, as an API</text><text x="355" y="198" text-anchor="middle">bookings</text></g>
+      <line x1="465" y1="140" x2="505" y2="140" stroke="#7c82a8" stroke-width="3" marker-end="url(#ar2)"/>
+      <g><rect x="510" y="80" width="210" height="120" rx="20" fill="#161c44" stroke="#f4f1ea"/><text x="615" y="135" text-anchor="middle" font-size="34">🧮</text><text x="615" y="178" text-anchor="middle">overbooking</text><text x="615" y="198" text-anchor="middle">maths</text><text x="615" y="224" text-anchor="middle" fill="#7c82a8" font-size="16">5,000 simulated nights</text></g>
+      <line x1="725" y1="140" x2="765" y2="140" stroke="#7c82a8" stroke-width="3" marker-end="url(#ar2)"/>
+      <g><rect x="770" y="80" width="200" height="120" rx="20" fill="#161c44" stroke="#a99bff"/><text x="870" y="135" text-anchor="middle" font-size="34">✍️</text><text x="870" y="178" text-anchor="middle">LLM writes</text><text x="870" y="198" text-anchor="middle">the briefing</text></g>
+      <line x1="975" y1="140" x2="1015" y2="140" stroke="#7c82a8" stroke-width="3" marker-end="url(#ar2)"/>
+      <g><rect x="1020" y="80" width="175" height="120" rx="20" fill="#2a1f3d" stroke="#ff8a5b" stroke-width="2"/><text x="1107" y="135" text-anchor="middle" font-size="34">📱</text><text x="1107" y="178" text-anchor="middle">manager's</text><text x="1107" y="198" text-anchor="middle">phone</text></g>
+    </g>
+  </svg>
+  <p class="lead">For example: "Sell 6 extra rooms tonight; call these 5 guests to confirm." Plus a Telegram bot you can ask about any booking.</p>
+</section>
+
+<!-- 5 -->
+<section>
+  <div class="kicker">The one rule to remember</div>
+  <h2>Everyone does what<br>they are good at</h2>
+  <div class="cards">
+    <div class="card"><span class="big">🎯</span><b class="t">The model</b><small>predicts: a probability, from data it learned</small></div>
+    <div class="card"><span class="big">🧮</span><b class="g">Code</b><small>calculates: costs, cut-offs, simulations. Exactly, every time</small></div>
+    <div class="card"><span class="big">✍️</span><b class="v">The LLM</b><small>explains and writes. Don't let it do the maths or decide alone</small></div>
+    <div class="card"><span class="big">🧑‍💼</span><b style="color:var(--accent)">A person</b><small>decides where a mistake would hurt someone</small></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section>
+  <div class="kicker">New · the model shelf</div>
+  <div class="grid2">
+    <div>
+      <h2>Your model,<br>as an API, in <em>seconds</em></h2>
+      <ul class="clean">
+        <li>Train any scikit-learn pipeline: regression, forest, boosting, XGBoost</li>
+        <li><code>pack(pipe, X_train, "my-model")</code> in Colab</li>
+        <li>Upload the zip, get an endpoint and a docs page with <i>Try it out</i></li>
+        <li>No pickles, no code on the server: safe to share</li>
+      </ul>
+    </div>
+    <div class="card mono" style="font-size:.72em; line-height:1.6">
+      <div style="color:var(--dim)">POST /m/demo-hotel-forest/predict</div>
+      <div style="margin:.4em 0 .9em">{"rows": [{"lead_time": 120, "hotel": "City Hotel", …}]}</div>
+      <div style="color:var(--dim)">→ 200 OK</div>
+      <div>{"predictions": [{"prediction": 0,<br>&nbsp;&nbsp;"probability": <span style="color:var(--accent)">0.45</span>}]}</div>
+      <div style="margin-top:1em; color:var(--teal)">models.automate.business.aau.dk</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section>
+  <div class="kicker">MCP · Model Context Protocol</div>
+  <div class="grid2">
+    <div>
+      <h2>An AI assistant<br>that builds <em>with</em> you</h2>
+      <p class="lead">Connect Claude or ChatGPT to your n8n, and ask in plain words: "add a step that only alerts above 50 %". It reads, changes and runs workflows.</p>
+      <p class="note">You still check what it built. You give it only the rights it needs.</p>
+    </div>
+    <svg viewBox="0 0 440 300" width="100%" style="max-height:44vh" role="img" aria-label="Assistant connected to n8n via MCP">
+      <rect x="10" y="100" width="150" height="100" rx="20" fill="#161c44" stroke="#a99bff"/><text x="85" y="145" text-anchor="middle" font-size="32">🤖</text><text x="85" y="182" text-anchor="middle" fill="#f4f1ea" font-size="18">assistant</text>
+      <rect x="280" y="100" width="150" height="100" rx="20" fill="#161c44" stroke="#5fd3c0"/><text x="355" y="145" text-anchor="middle" font-size="32">⚙️</text><text x="355" y="182" text-anchor="middle" fill="#f4f1ea" font-size="18">n8n</text>
+      <path d="M165 135 C 210 110, 230 110, 275 135" stroke="#ff8a5b" stroke-width="3" fill="none"/><path d="M275 165 C 230 190, 210 190, 165 165" stroke="#7c82a8" stroke-width="3" fill="none" stroke-dasharray="6 6"/>
+      <text x="220" y="100" text-anchor="middle" fill="#ff8a5b" font-size="16" font-family="JetBrains Mono, monospace">MCP</text>
+      <text x="220" y="228" text-anchor="middle" fill="#7c82a8" font-size="15">build · change · run</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 8 -->
+<section>
+  <div class="kicker">Today · 08:15–12:00</div>
+  <h2>The plan</h2>
+  <div class="timeline">
+    <div class="time">08:15</div><div class="what"><b>Demo</b> <span>front desk, Telegram bot, model shelf, MCP</span></div>
+    <div class="time">08:55</div><div class="what"><b>Set-up</b> <span>n8n account, a free LLM key, one template running</span></div>
+    <div class="time">09:15</div><div class="what"><b>Brainstorm</b> <span>in groups: what is worth automating?</span></div>
+    <div class="time">09:35</div><div class="what"><b>Build</b> <span>I go round and help</span></div>
+    <div class="time">10:35</div><div class="what"><b>Review</b> <span>3 minutes per group: a live run, what can go wrong</span></div>
+    <div class="time">11:00</div><div class="what"><b>Assignment</b> <span>Semester at the study office, with help at hand</span></div>
+  </div>
+  <p class="note">Breaks when they fit. Times are a guide.</p>
+</section>
+
+<!-- 9 -->
+<section>
+  <div class="kicker">Set-up · 15 minutes</div>
+  <h2>Three things</h2>
+  <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+    <div class="card"><span class="big">⚙️</span><b>n8n</b><small><b style="font:inherit;display:inline;color:var(--ink)">n8n.io</b> → free trial, 14 days, no card. Or <code>npx n8n</code> on your laptop.</small></div>
+    <div class="card"><span class="big">🔑</span><b>A free LLM key</b><small><b style="font:inherit;display:inline;color:var(--ink)">aistudio.google.com</b> → Gemini 3.5 Flash-Lite, or <b style="font:inherit;display:inline;color:var(--ink)">console.groq.com</b></small></div>
+    <div class="card"><span class="big">📦</span><b>A template</b><small>import <code>1-ask-the-model-shelf.json</code>, press <i>Execute</i>, fill in the form</small></div>
+  </div>
+  <p class="lead" style="margin-top:1.1em">🔒 Keys are passwords: only in n8n's credentials. No personal data into free LLMs.</p>
+</section>
+
+<!-- 10 -->
+<section>
+  <div class="kicker">Brainstorm · 20 minutes</div>
+  <h2>What would you<br>automate?</h2>
+  <div class="grid2" style="align-items:start">
+    <ul class="clean">
+      <li><b>Who</b> does it today, by hand? <b>How often</b>?</li>
+      <li>What <b>starts</b> it?</li>
+      <li>What does it need to <b>know</b>?</li>
+      <li>What should <b>happen</b> at the end?</li>
+      <li>What does a <b>wrong answer</b> cost, and who checks it?</li>
+    </ul>
+    <div>
+      <span class="pill">🏨 booking check → Telegram</span>
+      <span class="pill">💶 price quote bot</span>
+      <span class="pill">⭐ review sorter + reply draft</span>
+      <span class="pill">🌅 morning briefing</span>
+      <span class="pill">🎓 study office invitations</span>
+      <span class="pill">📰 news / job digest</span>
+      <span class="pill">📥 inbox triage</span>
+      <span class="pill">🤖 front-desk agent</span>
+      <span class="pill">🏠 your own model, put to work</span>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section>
+  <div class="kicker">Before you ship it</div>
+  <h2>What can go <em>wrong</em>?</h2>
+  <div class="cards">
+    <div class="card"><span class="big">📞</span><b>False alarm</b><small>the model flags someone who was fine. Who gets bothered?</small></div>
+    <div class="card"><span class="big">🚪</span><b>Missed case</b><small>the model says fine, it wasn't. Who notices?</small></div>
+    <div class="card"><span class="big">🌀</span><b>Made-up text</b><small>the LLM sounds sure and is wrong. Give it the facts in the prompt</small></div>
+    <div class="card"><span class="big">🔓</span><b>Leaks</b><small>keys in screenshots, personal data in a free API</small></div>
+  </div>
+  <p class="lead" style="margin-top:1.1em">Where a mistake hurts a person: send a <b>draft</b>, and let a human press send.</p>
+</section>
+
+<!-- 12 -->
+<section>
+  <div class="kicker">Everything is on Moodle</div>
+  <h1 style="font-size:clamp(36px,5vw,72px)">Let's build.</h1>
+  <div style="margin-top:1.2em; line-height:2">
+    <div>📘 <b>Guide</b> · Moodle, session 11</div>
+    <div>📦 <b>Model shelf</b> · <a href="https://models.automate.business.aau.dk" target="_blank" rel="noopener">models.automate.business.aau.dk</a> · class code <code>bds2026</code></div>
+    <div>📓 <b>Packaging notebook</b> · <a href="https://colab.research.google.com/github/aaubs/ds-master/blob/main/notebooks/M1_11_model_shelf.ipynb" target="_blank" rel="noopener">Colab</a></div>
+    <div>🧩 <b>Templates</b> · <a href="https://github.com/aaubs/ds-master/tree/main/apps/M1-n8n-automation" target="_blank" rel="noopener">GitHub</a> or Moodle</div>
+  </div>
+</section>
+
+</div>
+<div class="nav prev" onclick="go(-1)" aria-hidden="true"></div>
+<div class="nav next" onclick="go(1)" aria-hidden="true"></div>
+<div class="bar" id="bar"></div>
+<div class="hint">← → to move · F for full screen</div>
+<div class="count" id="count"></div>
+<script>
+const slides = [...document.querySelectorAll("section")];
+let i = Math.min(slides.length - 1, Math.max(0, (parseInt(location.hash.slice(1)) || 1) - 1));
+function show() {
+  slides.forEach((s, k) => s.classList.toggle("on", k === i));
+  document.getElementById("bar").style.width = ((i + 1) / slides.length * 100) + "%";
+  document.getElementById("count").textContent = (i + 1) + " / " + slides.length;
+  history.replaceState(null, "", "#" + (i + 1));
+}
+function go(d) { i = Math.min(slides.length - 1, Math.max(0, i + d)); show(); }
+addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); go(1); }
+  if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); go(-1); }
+  if (e.key === "Home") { i = 0; show(); } if (e.key === "End") { i = slides.length - 1; show(); }
+  if (e.key === "f" || e.key === "F") { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+});
+let x0 = null;
+addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
+addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); x0 = null; });
+show();
+</script>
+</body>
+</html>
